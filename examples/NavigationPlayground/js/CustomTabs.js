@@ -4,18 +4,23 @@
 
 import React from 'react';
 import {
+  Button,
   Platform,
   ScrollView,
   StyleSheet,
   StatusBar,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { BorderlessButton } from 'react-native-gesture-handler';
-import { createNavigator, SafeAreaView, TabRouter } from 'react-navigation';
-import { createAppContainer } from 'react-navigation';
+import {
+  createNavigator,
+  createNavigationContainer,
+  SafeAreaView,
+  TabRouter,
+  addNavigationHelpers,
+} from 'react-navigation';
 import SampleText from './SampleText';
-import { Button } from './commonComponents/ButtonWithMargin';
 
 const MyNavScreen = ({ navigation, banner }) => (
   <ScrollView>
@@ -49,26 +54,31 @@ const CustomTabBar = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.tabContainer}>
       {routes.map(route => (
-        <BorderlessButton
+        <TouchableOpacity
           onPress={() => navigation.navigate(route.routeName)}
           style={styles.tab}
           key={route.routeName}
         >
           <Text>{route.routeName}</Text>
-        </BorderlessButton>
+        </TouchableOpacity>
       ))}
     </SafeAreaView>
   );
 };
 
-const CustomTabView = ({ descriptors, navigation }) => {
+const CustomTabView = ({ router, navigation }) => {
   const { routes, index } = navigation.state;
-  const descriptor = descriptors[routes[index].key];
-  const ActiveScreen = descriptor.getComponent();
+  const ActiveScreen = router.getComponentForRouteName(routes[index].routeName);
   return (
     <SafeAreaView forceInset={{ top: 'always' }}>
       <CustomTabBar navigation={navigation} />
-      <ActiveScreen navigation={descriptor.navigation} />
+      <ActiveScreen
+        navigation={addNavigationHelpers({
+          dispatch: navigation.dispatch,
+          state: routes[index],
+        })}
+        screenProps={{}}
+      />
     </SafeAreaView>
   );
 };
@@ -94,8 +104,8 @@ const CustomTabRouter = TabRouter(
   }
 );
 
-const CustomTabs = createAppContainer(
-  createNavigator(CustomTabView, CustomTabRouter, {})
+const CustomTabs = createNavigationContainer(
+  createNavigator(CustomTabRouter)(CustomTabView)
 );
 
 const styles = StyleSheet.create({

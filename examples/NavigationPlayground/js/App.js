@@ -11,20 +11,12 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
   Text,
   StatusBar,
   View,
 } from 'react-native';
-import {
-  RectButton,
-  NativeViewGestureHandler,
-} from 'react-native-gesture-handler';
-import {
-  createAppContainer,
-  SafeAreaView,
-  createStackNavigator,
-} from 'react-navigation';
-import { Assets as StackAssets } from 'react-navigation-stack';
+import { SafeAreaView, StackNavigator } from 'react-navigation';
 
 import CustomTabs from './CustomTabs';
 import CustomTransitioner from './CustomTransitioner';
@@ -33,22 +25,16 @@ import MultipleDrawer from './MultipleDrawer';
 import TabsInDrawer from './TabsInDrawer';
 import ModalStack from './ModalStack';
 import StacksInTabs from './StacksInTabs';
+import SwitchWithStacks from './SwitchWithStacks';
 import StacksOverTabs from './StacksOverTabs';
-import StacksOverTopTabs from './StacksOverTopTabs';
 import StacksWithKeys from './StacksWithKeys';
-import InactiveStack from './InactiveStack';
-import StackWithCustomHeaderBackImage from './StackWithCustomHeaderBackImage';
 import SimpleStack from './SimpleStack';
 import StackWithHeaderPreset from './StackWithHeaderPreset';
 import StackWithTranslucentHeader from './StackWithTranslucentHeader';
 import SimpleTabs from './SimpleTabs';
-import CustomTabUI from './CustomTabUI';
-import SwitchWithStacks from './SwitchWithStacks';
+import CustomTabNavigator from './CustomTabNavigator';
+import TabAnimations from './TabAnimations';
 import TabsWithNavigationFocus from './TabsWithNavigationFocus';
-import TabsWithNavigationEvents from './TabsWithNavigationEvents';
-import KeyboardHandlingExample from './KeyboardHandlingExample';
-
-process.env.REACT_NAV_LOGGING = true;
 
 const ExampleInfo = {
   SimpleStack: {
@@ -56,17 +42,8 @@ const ExampleInfo = {
     description: 'A card stack',
   },
   SwitchWithStacks: {
-    name: 'Switch between routes',
-    description: 'Jump between routes',
-  },
-  InactiveStack: {
-    name: 'Navigate idempotently to stacks in inactive routes',
-    description:
-      'An inactive route in a stack should be given the opportunity to handle actions',
-  },
-  StackWithCustomHeaderBackImage: {
-    name: 'Custom header back image',
-    description: 'Stack with custom header back image',
+    name: 'Switch Example',
+    description: 'A switch with stacks inside',
   },
   SimpleTabs: {
     name: 'Tabs Example',
@@ -75,6 +52,10 @@ const ExampleInfo = {
   Drawer: {
     name: 'Drawer Example',
     description: 'Android-style drawer navigation',
+  },
+  StackWithHeaderPreset: {
+    name: 'UIKit-style Header Transitions',
+    description: 'Masked back button and sliding header items. iOS only.',
   },
   StackWithHeaderPreset: {
     name: 'UIKit-style Header Transitions',
@@ -92,9 +73,13 @@ const ExampleInfo = {
     name: 'Drawer + Tabs Example',
     description: 'A drawer combined with tabs',
   },
+  CustomTabNavigator: {
+    name: 'Custom Tab Navigator Example',
+    description: 'Extending the tab navigator',
+  },
   CustomTabs: {
-    name: 'Custom Tabs',
-    description: 'Custom tabs with tab router',
+    name: 'Custom Tabs View',
+    description: 'Custom tabs using TabRouter',
   },
   CustomTransitioner: {
     name: 'Custom Transitioner',
@@ -118,10 +103,6 @@ const ExampleInfo = {
     name: 'Stacks over Tabs',
     description: 'Nested stack navigation that pushes on top of tabs',
   },
-  StacksOverTopTabs: {
-    name: 'Stacks with non-standard header height',
-    description: 'Tab navigator in stack with custom header heights',
-  },
   StacksWithKeys: {
     name: 'Link in Stack with keys',
     description: 'Use keys to link between screens',
@@ -134,51 +115,34 @@ const ExampleInfo = {
     name: 'Link to Settings Tab',
     description: 'Deep linking into a route in tab',
   },
+  TabAnimations: {
+    name: 'Animated Tabs Example',
+    description: 'Tab transitions have custom animations',
+  },
   TabsWithNavigationFocus: {
     name: 'withNavigationFocus',
     description: 'Receive the focus prop to know when a screen is focused',
-  },
-  TabsWithNavigationEvents: {
-    name: 'NavigationEvents',
-    description:
-      'Declarative NavigationEvents component to subscribe to navigation events',
-  },
-  KeyboardHandlingExample: {
-    name: 'Keyboard Handling Example',
-    description:
-      'Demo automatic handling of keyboard showing/hiding inside StackNavigator',
-  },
-  CustomTabUI: {
-    name: 'Custom Tabs UI',
-    description: 'Render additional views around a Tab navigator',
   },
 };
 
 const ExampleRoutes = {
   SimpleStack,
   SwitchWithStacks,
-  SimpleTabs: SimpleTabs,
-  Drawer: Drawer,
+  SimpleTabs,
+  Drawer,
   // MultipleDrawer: {
   //   screen: MultipleDrawer,
   // },
-  StackWithCustomHeaderBackImage: StackWithCustomHeaderBackImage,
-  ...Platform.select({
-    ios: {
-      StackWithHeaderPreset: StackWithHeaderPreset,
-    },
-    android: {},
-  }),
-  StackWithTranslucentHeader: StackWithTranslucentHeader,
-  TabsInDrawer: TabsInDrawer,
-  CustomTabs: CustomTabs,
-  CustomTransitioner: CustomTransitioner,
-  ModalStack: ModalStack,
-  StacksWithKeys: StacksWithKeys,
-  StacksInTabs: StacksInTabs,
-  CustomTabUI: CustomTabUI,
-  StacksOverTabs: StacksOverTabs,
-  StacksOverTopTabs: StacksOverTopTabs,
+  StackWithHeaderPreset,
+  StackWithTranslucentHeader,
+  TabsInDrawer,
+  CustomTabs,
+  CustomTransitioner,
+  ModalStack,
+  StacksWithKeys,
+  StacksInTabs,
+  StacksOverTabs,
+  CustomTabNavigator,
   LinkStack: {
     screen: SimpleStack,
     path: 'people/Jordan',
@@ -187,11 +151,8 @@ const ExampleRoutes = {
     screen: SimpleTabs,
     path: 'settings',
   },
+  TabAnimations,
   TabsWithNavigationFocus,
-  TabsWithNavigationEvents,
-  KeyboardHandlingExample,
-  // This is commented out because it's rarely useful
-  // InactiveStack,
 };
 
 type State = {
@@ -202,8 +163,13 @@ class MainScreen extends React.Component<any, State> {
     scrollY: new Animated.Value(0),
   };
 
-  componentDidMount() {
-    Asset.loadAsync(StackAssets);
+  componentWillMount() {
+    Asset.fromModule(
+      require('react-navigation/src/views/assets/back-icon-mask.png')
+    ).downloadAsync();
+    Asset.fromModule(
+      require('react-navigation/src/views/assets/back-icon.png')
+    ).downloadAsync();
   }
 
   render() {
@@ -245,72 +211,69 @@ class MainScreen extends React.Component<any, State> {
 
     return (
       <View style={{ flex: 1 }}>
-        <NativeViewGestureHandler>
-          <Animated.ScrollView
-            style={{ flex: 1, backgroundColor: '#eee' }}
-            scrollEventThrottle={1}
-            onScroll={Animated.event(
-              [
-                {
-                  nativeEvent: { contentOffset: { y: this.state.scrollY } },
-                },
-              ],
-              { useNativeDriver: true }
-            )}
+        <Animated.ScrollView
+          style={{ flex: 1 }}
+          scrollEventThrottle={1}
+          onScroll={Animated.event(
+            [
+              {
+                nativeEvent: { contentOffset: { y: this.state.scrollY } },
+              },
+            ],
+            { useNativeDriver: true }
+          )}
+        >
+          <Animated.View
+            style={[
+              styles.backgroundUnderlay,
+              {
+                transform: [
+                  { scale: backgroundScale },
+                  { translateY: backgroundTranslateY },
+                ],
+              },
+            ]}
+          />
+          <Animated.View
+            style={{ opacity, transform: [{ scale }, { translateY }] }}
           >
-            <Animated.View
-              style={[
-                styles.backgroundUnderlay,
-                {
-                  transform: [
-                    { scale: backgroundScale },
-                    { translateY: backgroundTranslateY },
-                  ],
-                },
-              ]}
-            />
-            <Animated.View
-              style={{ opacity, transform: [{ scale }, { translateY }] }}
-            >
-              <SafeAreaView
-                style={styles.bannerContainer}
-                forceInset={{ top: 'always', bottom: 'never' }}
-              >
-                <View style={styles.banner}>
-                  <Image
-                    source={require('./assets/NavLogo.png')}
-                    style={styles.bannerImage}
-                  />
-                  <Text style={styles.bannerTitle}>
-                    React Navigation Examples
-                  </Text>
-                </View>
-              </SafeAreaView>
-            </Animated.View>
-
             <SafeAreaView
-              forceInset={{ top: 'never', bottom: 'always' }}
-              style={{ backgroundColor: '#eee' }}
+              style={styles.bannerContainer}
+              forceInset={{ top: 'always', bottom: 'never' }}
             >
-              <View style={{ backgroundColor: '#fff' }}>
-                {Object.keys(ExampleRoutes).map((routeName: string) => (
-                  <RectButton
-                    key={routeName}
-                    underlayColor="#ccc"
-                    activeOpacity={0.3}
-                    onPress={() => {
-                      let route = ExampleRoutes[routeName];
-                      if (route.screen || route.path || route.params) {
-                        const { path, params, screen } = route;
-                        const { router } = screen;
-                        const action =
-                          path &&
-                          router.getActionForPathAndParams(path, params);
-                        navigation.navigate(routeName, {}, action);
-                      } else {
-                        navigation.navigate(routeName);
-                      }
-                    }}
+              <View style={styles.banner}>
+                <Image
+                  source={require('./assets/NavLogo.png')}
+                  style={styles.bannerImage}
+                />
+                <Text style={styles.bannerTitle}>
+                  React Navigation Examples
+                </Text>
+              </View>
+            </SafeAreaView>
+          </Animated.View>
+
+          <SafeAreaView forceInset={{ bottom: 'always', horizontal: 'never' }}>
+            <View style={{ backgroundColor: '#fff' }}>
+              {Object.keys(ExampleRoutes).map((routeName: string) => (
+                <TouchableOpacity
+                  key={routeName}
+                  onPress={() => {
+                    let route = ExampleRoutes[routeName];
+                    if (route.screen || route.path || route.params) {
+                      const { path, params, screen } = route;
+                      const { router } = screen;
+                      const action =
+                        path && router.getActionForPathAndParams(path, params);
+                      navigation.navigate(routeName, {}, action);
+                    } else {
+                      navigation.navigate(routeName);
+                    }
+                  }}
+                >
+                  <SafeAreaView
+                    style={styles.itemContainer}
+                    forceInset={{ veritcal: 'never', bottom: 'never' }}
                   >
                     <View style={styles.item}>
                       <Text style={styles.title}>
@@ -320,12 +283,12 @@ class MainScreen extends React.Component<any, State> {
                         {ExampleInfo[routeName].description}
                       </Text>
                     </View>
-                  </RectButton>
-                ))}
-              </View>
-            </SafeAreaView>
-          </Animated.ScrollView>
-        </NativeViewGestureHandler>
+                  </SafeAreaView>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </SafeAreaView>
+        </Animated.ScrollView>
         <StatusBar barStyle="light-content" />
         <Animated.View
           style={[styles.statusBarUnderlay, { opacity: underlayOpacity }]}
@@ -335,37 +298,34 @@ class MainScreen extends React.Component<any, State> {
   }
 }
 
-const AppNavigator = createAppContainer(
-  createStackNavigator(
-    {
-      ...ExampleRoutes,
-      Index: {
-        screen: MainScreen,
-      },
+const AppNavigator = StackNavigator(
+  {
+    ...ExampleRoutes,
+    Index: {
+      screen: MainScreen,
     },
-    {
-      initialRouteName: 'Index',
-      headerMode: 'none',
+  },
+  {
+    initialRouteName: 'Index',
+    headerMode: 'none',
 
-      /*
-     * Use modal on iOS because the card mode comes from the right,
-     * which conflicts with the drawer example gesture
-     */
-      mode: Platform.OS === 'ios' ? 'modal' : 'card',
-    }
-  )
+    /*
+   * Use modal on iOS because the card mode comes from the right,
+   * which conflicts with the drawer example gesture
+   */
+    mode: Platform.OS === 'ios' ? 'modal' : 'card',
+  }
 );
 
-export default class App extends React.Component {
-  render() {
-    return <AppNavigator /* persistenceKey="if-you-want-it" */ />;
-  }
-}
+export default () => <AppNavigator />;
 
 const styles = StyleSheet.create({
   item: {
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#ddd',
   },

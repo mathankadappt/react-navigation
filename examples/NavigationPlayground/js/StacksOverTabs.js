@@ -3,21 +3,15 @@
  */
 
 import React from 'react';
-import { ScrollView, StatusBar } from 'react-native';
-import {
-  SafeAreaView,
-  createStackNavigator,
-  createBottomTabNavigator,
-  getActiveChildNavigationOptions,
-} from 'react-navigation';
+import { Button, ScrollView, StatusBar } from 'react-native';
+import { SafeAreaView, StackNavigator, TabNavigator } from 'react-navigation';
 
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SampleText from './SampleText';
-import { Button } from './commonComponents/ButtonWithMargin';
 
 const MyNavScreen = ({ navigation, banner }) => (
   <ScrollView>
-    <SafeAreaView forceInset={{ horizontal: 'always', vertical: 'never' }}>
+    <SafeAreaView forceInset={{ horizontal: 'always' }}>
       <SampleText>{banner}</SampleText>
       <Button
         onPress={() => navigation.navigate('Profile', { name: 'Jordan' })}
@@ -56,7 +50,7 @@ const MySettingsScreen = ({ navigation }) => (
   <MyNavScreen banner="Settings Screen" navigation={navigation} />
 );
 
-const TabNav = createBottomTabNavigator(
+const TabNav = TabNavigator(
   {
     MainTab: {
       screen: MyHomeScreen,
@@ -95,14 +89,7 @@ const TabNav = createBottomTabNavigator(
   }
 );
 
-TabNav.navigationOptions = ({ navigation, screenProps }) => {
-  const childOptions = getActiveChildNavigationOptions(navigation, screenProps);
-  return {
-    title: childOptions.title,
-  };
-};
-
-const StacksOverTabs = createStackNavigator({
+const StacksOverTabs = StackNavigator({
   Root: {
     screen: TabNav,
   },
@@ -115,9 +102,9 @@ const StacksOverTabs = createStackNavigator({
   Profile: {
     screen: MyProfileScreen,
     path: '/people/:name',
-    navigationOptions: ({ navigation }) => ({
-      title: `${navigation.state.params.name}'s Profile!`,
-    }),
+    navigationOptions: ({ navigation }) => {
+      title: `${navigation.state.params.name}'s Profile!`;
+    },
   },
 });
 

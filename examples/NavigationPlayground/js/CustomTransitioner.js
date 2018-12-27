@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import {
   Animated,
+  Button,
   Easing,
   Image,
   Platform,
@@ -9,14 +10,14 @@ import {
   View,
 } from 'react-native';
 import {
-  createAppContainer,
   Transitioner,
   SafeAreaView,
   StackRouter,
+  createNavigationContainer,
+  addNavigationHelpers,
   createNavigator,
 } from 'react-navigation';
 import SampleText from './SampleText';
-import { Button } from './commonComponents/ButtonWithMargin';
 
 const MyNavScreen = ({ navigation, banner }) => (
   <SafeAreaView forceInset={{ top: 'always' }}>
@@ -44,12 +45,11 @@ const MySettingsScreen = ({ navigation }) => (
 
 class CustomNavigationView extends Component {
   render() {
-    const { navigation, router, descriptors } = this.props;
+    const { navigation, router } = this.props;
 
     return (
       <Transitioner
         configureTransition={this._configureTransition}
-        descriptors={descriptors}
         navigation={navigation}
         render={this._render}
       />
@@ -86,10 +86,16 @@ class CustomNavigationView extends Component {
       transform: [{ scale: animatedValue }],
     };
 
-    const Scene = scene.descriptor.getComponent();
+    // The prop `router` is populated when we call `createNavigator`.
+    const Scene = router.getComponentForRouteName(scene.route.routeName);
     return (
       <Animated.View key={index} style={[styles.view, animation]}>
-        <Scene navigation={scene.descriptor.navigation} />
+        <Scene
+          navigation={addNavigationHelpers({
+            ...navigation,
+            state: routes[index],
+          })}
+        />
       </Animated.View>
     );
   };
@@ -100,8 +106,8 @@ const CustomRouter = StackRouter({
   Settings: { screen: MySettingsScreen },
 });
 
-const CustomTransitioner = createAppContainer(
-  createNavigator(CustomNavigationView, CustomRouter, {})
+const CustomTransitioner = createNavigationContainer(
+  createNavigator(CustomRouter)(CustomNavigationView)
 );
 
 export default CustomTransitioner;

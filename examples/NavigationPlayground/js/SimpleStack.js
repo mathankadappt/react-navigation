@@ -4,44 +4,22 @@
 
 import type {
   NavigationScreenProp,
-  NavigationState,
-  NavigationStateRoute,
   NavigationEventSubscription,
 } from 'react-navigation';
 
 import * as React from 'react';
-import { Platform, ScrollView, StatusBar } from 'react-native';
-import {
-  createStackNavigator,
-  SafeAreaView,
-  withNavigation,
-  NavigationActions,
-  StackActions,
-} from 'react-navigation';
-import invariant from 'invariant';
-
+import { Button, ScrollView, StatusBar } from 'react-native';
+import { StackNavigator, SafeAreaView, withNavigation } from 'react-navigation';
 import SampleText from './SampleText';
-import { Button } from './commonComponents/ButtonWithMargin';
-import { HeaderButtons } from './commonComponents/HeaderButtons';
-
-const DEBUG = false;
 
 type MyNavScreenProps = {
-  navigation: NavigationScreenProp<NavigationState>,
+  navigation: NavigationScreenProp<*>,
   banner: React.Node,
 };
 
-type BackButtonProps = {
-  navigation: NavigationScreenProp<NavigationStateRoute>,
-};
-
-class MyBackButton extends React.Component<BackButtonProps, any> {
+class MyBackButton extends React.Component<any, any> {
   render() {
-    return (
-      <HeaderButtons>
-        <HeaderButtons.Item title="Back" onPress={this._navigateBack} />
-      </HeaderButtons>
-    );
+    return <Button onPress={this._navigateBack} title="Custom Back" />;
   }
 
   _navigateBack = () => {
@@ -54,55 +32,24 @@ const MyBackButtonWithNavigation = withNavigation(MyBackButton);
 class MyNavScreen extends React.Component<MyNavScreenProps> {
   render() {
     const { navigation, banner } = this.props;
-    const { push, replace, popToTop, pop, dismiss } = navigation;
-    invariant(
-      push && replace && popToTop && pop && dismiss,
-      'missing action creators for StackNavigator'
-    );
     return (
-      <SafeAreaView forceInset={{ top: 'never' }}>
+      <SafeAreaView>
         <SampleText>{banner}</SampleText>
         <Button
-          onPress={() => push('Profile', { name: 'Jane' })}
+          onPress={() => navigation.push('Profile', { name: 'Jane' })}
           title="Push a profile screen"
-        />
-        <Button
-          onPress={() =>
-            navigation.dispatch(
-              StackActions.reset({
-                index: 0,
-                actions: [
-                  NavigationActions.navigate({
-                    routeName: 'Photos',
-                    params: { name: 'Jane' },
-                  }),
-                ],
-              })
-            )
-          }
-          title="Reset photos"
         />
         <Button
           onPress={() => navigation.navigate('Photos', { name: 'Jane' })}
           title="Navigate to a photos screen"
         />
         <Button
-          onPress={() => replace('Profile', { name: 'Lucy' })}
+          onPress={() => navigation.replace('Profile', { name: 'Lucy' })}
           title="Replace with profile"
         />
-        <Button onPress={() => popToTop()} title="Pop to top" />
-        <Button onPress={() => pop()} title="Pop" />
-        <Button
-          onPress={() => {
-            if (navigation.goBack()) {
-              console.log('goBack handled');
-            } else {
-              console.log('goBack unhandled');
-            }
-          }}
-          title="Go back"
-        />
-        <Button onPress={() => dismiss()} title="Dismiss" />
+        <Button onPress={() => navigation.popToTop()} title="Pop to top" />
+        <Button onPress={() => navigation.pop()} title="Pop" />
+        <Button onPress={() => navigation.goBack(null)} title="Go back" />
         <StatusBar barStyle="default" />
       </SafeAreaView>
     );
@@ -110,7 +57,7 @@ class MyNavScreen extends React.Component<MyNavScreenProps> {
 }
 
 type MyHomeScreenProps = {
-  navigation: NavigationScreenProp<NavigationState>,
+  navigation: NavigationScreenProp<*>,
 };
 
 class MyHomeScreen extends React.Component<MyHomeScreenProps> {
@@ -135,16 +82,16 @@ class MyHomeScreen extends React.Component<MyHomeScreenProps> {
     this._s3.remove();
   }
   _onWF = a => {
-    DEBUG && console.log('_willFocus HomeScreen', a);
+    console.log('_willFocus HomeScreen', a);
   };
   _onDF = a => {
-    DEBUG && console.log('_didFocus HomeScreen', a);
+    console.log('_didFocus HomeScreen', a);
   };
   _onWB = a => {
-    DEBUG && console.log('_willBlur HomeScreen', a);
+    console.log('_willBlur HomeScreen', a);
   };
   _onDB = a => {
-    DEBUG && console.log('_didBlur HomeScreen', a);
+    console.log('_didBlur HomeScreen', a);
   };
 
   render() {
@@ -154,7 +101,7 @@ class MyHomeScreen extends React.Component<MyHomeScreenProps> {
 }
 
 type MyPhotosScreenProps = {
-  navigation: NavigationScreenProp<NavigationState>,
+  navigation: NavigationScreenProp<*>,
 };
 class MyPhotosScreen extends React.Component<MyPhotosScreenProps> {
   static navigationOptions = {
@@ -179,23 +126,23 @@ class MyPhotosScreen extends React.Component<MyPhotosScreenProps> {
     this._s3.remove();
   }
   _onWF = a => {
-    DEBUG && console.log('_willFocus PhotosScreen', a);
+    console.log('_willFocus PhotosScreen', a);
   };
   _onDF = a => {
-    DEBUG && console.log('_didFocus PhotosScreen', a);
+    console.log('_didFocus PhotosScreen', a);
   };
   _onWB = a => {
-    DEBUG && console.log('_willBlur PhotosScreen', a);
+    console.log('_willBlur PhotosScreen', a);
   };
   _onDB = a => {
-    DEBUG && console.log('_didBlur PhotosScreen', a);
+    console.log('_didBlur PhotosScreen', a);
   };
 
   render() {
     const { navigation } = this.props;
     return (
       <MyNavScreen
-        banner={`${navigation.getParam('name')}'s Photos`}
+        banner={`${navigation.state.params.name}'s Photos`}
         navigation={navigation}
       />
     );
@@ -204,9 +151,9 @@ class MyPhotosScreen extends React.Component<MyPhotosScreenProps> {
 
 const MyProfileScreen = ({ navigation }) => (
   <MyNavScreen
-    banner={`${
-      navigation.getParam('mode') === 'edit' ? 'Now Editing ' : ''
-    }${navigation.getParam('name')}'s Profile`}
+    banner={`${navigation.state.params.mode === 'edit' ? 'Now Editing ' : ''}${
+      navigation.state.params.name
+    }'s Profile`}
     navigation={navigation}
   />
 );
@@ -221,35 +168,28 @@ MyProfileScreen.navigationOptions = props => {
     // Render a button on the right side of the header.
     // When pressed switches the screen to edit mode.
     headerRight: (
-      <HeaderButtons>
-        <HeaderButtons.Item
-          title={params.mode === 'edit' ? 'Done' : 'Edit'}
-          onPress={() =>
-            setParams({ mode: params.mode === 'edit' ? '' : 'edit' })
-          }
-        />
-      </HeaderButtons>
+      <Button
+        title={params.mode === 'edit' ? 'Done' : 'Edit'}
+        onPress={() =>
+          setParams({ mode: params.mode === 'edit' ? '' : 'edit' })
+        }
+      />
     ),
   };
 };
 
-const SimpleStack = createStackNavigator(
-  {
-    Home: {
-      screen: MyHomeScreen,
-    },
-    Profile: {
-      path: 'people/:name',
-      screen: MyProfileScreen,
-    },
-    Photos: {
-      path: 'photos/:name',
-      screen: MyPhotosScreen,
-    },
+const SimpleStack = StackNavigator({
+  Home: {
+    screen: MyHomeScreen,
   },
-  {
-    // headerLayoutPreset: 'center',
-  }
-);
+  Profile: {
+    path: 'people/:name',
+    screen: MyProfileScreen,
+  },
+  Photos: {
+    path: 'photos/:name',
+    screen: MyPhotosScreen,
+  },
+});
 
 export default SimpleStack;

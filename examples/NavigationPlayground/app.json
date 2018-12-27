@@ -11,16 +11,16 @@
     "splash": {
       "image": "./assets/icons/splash.png"
     },
-    "sdkVersion": "30.0.0",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "bundleIdentifier": "com.reactnavigation.example",
-      "supportsTablet": true
+    "sdkVersion": "26.0.0",
+    "entryPoint": "./node_modules/react-native-scripts/build/bin/crna-entry.js",
+    "packagerOpts": {
+      "assetExts": [
+        "ttf",
+        "mp4"
+      ]
     },
-    "android": {
-      "package": "com.reactnavigation.example"
+    "ios": {
+      "supportsTablet": true
     }
   }
 }
